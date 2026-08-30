@@ -200,7 +200,8 @@
 
 .book {
   position: relative;
-  width: min(340px, 88vw);
+  height: min(560px, 74svh, calc(88vw / 0.75));
+  width: auto;
   aspect-ratio: 3 / 4;
   transform-style: preserve-3d;
   transform: translateX(0) rotateX(6deg);
@@ -209,7 +210,8 @@
 }
 
 .book.is-open {
-  width: min(700px, 94vw);
+  aspect-ratio: 3 / 2;
+  height: min(560px, 74svh, calc(94vw / 1.5));
   transform: translateX(0) rotateX(4deg);
 }
 
