@@ -194,7 +194,7 @@ export default function FishingBook() {
         <div className="book-body">
           <div className="book-left-page">
             {flipped > 0 ? (
-              <div className="book-page-inner opacity-95">{SHEETS[flipped - 1].back}</div>
+              <div className="book-page-inner opacity-95">{SHEETS[flipped - 1]?.back}</div>
             ) : (
               <div className="book-page-inner items-center justify-center">
                 <p className="font-body text-[0.6rem] uppercase tracking-[0.3em] text-ink-faded">
