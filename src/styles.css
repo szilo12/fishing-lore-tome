@@ -142,3 +142,321 @@
     color: var(--color-foreground);
   }
 }
+
+/* ------------------------------------------------------------------
+ * Antique fishing book — design tokens
+ * ------------------------------------------------------------------ */
+
+@theme inline {
+  --color-parchment: var(--parchment);
+  --color-parchment-deep: var(--parchment-deep);
+  --color-ink: var(--ink);
+  --color-ink-faded: var(--ink-faded);
+  --color-leather: var(--leather);
+  --color-gilt: var(--gilt);
+  --font-display: "Cormorant Garamond", serif;
+  --font-body: "EB Garamond", serif;
+}
+
+:root {
+  --parchment: oklch(0.93 0.031 88);
+  --parchment-deep: oklch(0.86 0.042 82);
+  --ink: oklch(0.32 0.033 55);
+  --ink-faded: oklch(0.52 0.03 60);
+  --leather: oklch(0.32 0.055 40);
+  --leather-dark: oklch(0.21 0.043 38);
+  --gilt: oklch(0.79 0.108 82);
+  --desk: oklch(0.24 0.03 45);
+
+  --shadow-book: 0 40px 70px -25px oklch(0 0 0 / 0.7);
+  --page-grain: radial-gradient(
+      circle at 18% 22%,
+      oklch(0.75 0.06 70 / 0.18) 0 6px,
+      transparent 7px
+    ),
+    radial-gradient(circle at 72% 68%, oklch(0.7 0.07 60 / 0.14) 0 9px, transparent 10px),
+    radial-gradient(circle at 45% 88%, oklch(0.72 0.06 65 / 0.12) 0 5px, transparent 6px);
+}
+
+.desk {
+  min-height: 100svh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 1rem;
+  background:
+    radial-gradient(ellipse at 50% 40%, oklch(0.36 0.04 50) 0%, var(--desk) 55%, oklch(0.15 0.02 40) 100%);
+}
+
+.book-stage {
+  perspective: 2400px;
+  perspective-origin: 50% 45%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.75rem;
+  width: 100%;
+}
+
+.book {
+  position: relative;
+  width: min(340px, 88vw);
+  aspect-ratio: 3 / 4;
+  transform-style: preserve-3d;
+  transform: translateX(0) rotateX(6deg);
+  transition: transform 900ms cubic-bezier(0.22, 1, 0.36, 1), width 900ms cubic-bezier(0.22, 1, 0.36, 1);
+  filter: drop-shadow(0 45px 45px oklch(0 0 0 / 0.55));
+}
+
+.book.is-open {
+  width: min(700px, 94vw);
+  transform: translateX(0) rotateX(4deg);
+}
+
+/* --- body / static pages --- */
+.book-body {
+  position: absolute;
+  inset: 0;
+  transform-style: preserve-3d;
+  border-radius: 4px 7px 7px 4px;
+  background: linear-gradient(180deg, var(--leather), var(--leather-dark));
+  box-shadow: var(--shadow-book);
+  opacity: 0;
+  transition: opacity 300ms ease 200ms;
+}
+
+.book.is-open .book-body {
+  opacity: 1;
+}
+
+.book-left-page,
+.book-right-page {
+  position: absolute;
+  top: 2%;
+  bottom: 2%;
+  width: 49%;
+  background-color: var(--parchment);
+  background-image: var(--page-grain);
+  overflow: hidden;
+}
+
+.book-left-page {
+  left: 1%;
+  border-radius: 4px 2px 2px 4px;
+  box-shadow: inset -22px 0 30px -22px oklch(0.25 0.04 45 / 0.85);
+}
+
+.book-right-page {
+  right: 1%;
+  border-radius: 2px 4px 4px 2px;
+  box-shadow: inset 22px 0 30px -22px oklch(0.25 0.04 45 / 0.85);
+}
+
+.book-gutter {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: 26px;
+  transform: translateX(-50%);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    oklch(0.3 0.04 45 / 0.35) 35%,
+    oklch(0.22 0.03 40 / 0.5) 50%,
+    oklch(0.3 0.04 45 / 0.35) 65%,
+    transparent
+  );
+  z-index: 60;
+  pointer-events: none;
+}
+
+/* --- flipping sheets --- */
+.sheet {
+  position: absolute;
+  top: 2%;
+  bottom: 2%;
+  left: 50%;
+  width: 49%;
+  transform-style: preserve-3d;
+  transform-origin: left center;
+  transition: transform 900ms cubic-bezier(0.5, 0.02, 0.3, 1);
+  transform: rotateY(0deg);
+}
+
+.sheet.is-flipped {
+  transform: rotateY(-180deg);
+}
+
+.sheet-face {
+  position: absolute;
+  inset: 0;
+  backface-visibility: hidden;
+  background-color: var(--parchment);
+  background-image: var(--page-grain);
+  overflow: hidden;
+}
+
+.sheet-front {
+  border-radius: 2px 4px 4px 2px;
+  box-shadow: inset 18px 0 26px -20px oklch(0.25 0.04 45 / 0.8);
+}
+
+.sheet-back {
+  transform: rotateY(180deg);
+  border-radius: 4px 2px 2px 4px;
+  box-shadow: inset -18px 0 26px -20px oklch(0.25 0.04 45 / 0.8);
+}
+
+.book-page-inner {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 1.25rem 1.1rem 1rem;
+  color: var(--ink);
+  background-image: linear-gradient(
+      120deg,
+      oklch(0.62 0.07 60 / 0.16) 0%,
+      transparent 22%,
+      transparent 78%,
+      oklch(0.6 0.07 55 / 0.2) 100%
+    );
+}
+
+.plate {
+  border: 1px solid oklch(0.32 0.033 55 / 0.35);
+  padding: 4px;
+  background: oklch(0.96 0.02 90 / 0.5);
+  box-shadow: 0 2px 8px -4px oklch(0.3 0.04 45 / 0.6);
+}
+
+.plate img {
+  display: block;
+  mix-blend-mode: multiply;
+  filter: sepia(0.35) contrast(1.05);
+}
+
+/* --- cover --- */
+.book-cover {
+  position: absolute;
+  inset: 0;
+  transform-origin: left center;
+  transform-style: preserve-3d;
+  transition: transform 1000ms cubic-bezier(0.5, 0.02, 0.25, 1);
+  border-radius: 4px 8px 8px 4px;
+  background:
+    radial-gradient(ellipse at 30% 20%, oklch(0.38 0.06 42), transparent 60%),
+    linear-gradient(160deg, var(--leather) 0%, var(--leather-dark) 100%);
+  box-shadow: var(--shadow-book), inset 0 0 60px oklch(0.12 0.02 35 / 0.7);
+  cursor: pointer;
+  z-index: 90;
+  padding: 0;
+  border: none;
+  display: grid;
+  place-items: center;
+}
+
+.book:not(.is-open) .book-cover:hover {
+  transform: rotateY(-9deg) translateZ(4px);
+}
+
+.book.is-open .book-cover {
+  transform: rotateY(-180deg) translateX(-1px);
+  left: 1%;
+  width: 50%;
+  pointer-events: none;
+}
+
+.cover-frame {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 2.2rem 1.6rem;
+  border: 1px solid oklch(0.79 0.108 82 / 0.55);
+  outline: 1px solid oklch(0.79 0.108 82 / 0.25);
+  outline-offset: 5px;
+  color: var(--gilt);
+  backface-visibility: hidden;
+}
+
+.cover-emblem {
+  font-size: 1.6rem;
+  opacity: 0.85;
+}
+
+.cover-title {
+  font-family: var(--font-display);
+  font-size: clamp(1.6rem, 6vw, 2.1rem);
+  font-weight: 700;
+  line-height: 1.05;
+  letter-spacing: 0.02em;
+  text-align: center;
+  text-shadow: 0 1px 0 oklch(0.2 0.03 40);
+}
+
+.cover-rule {
+  width: 3.5rem;
+  height: 1px;
+  background: currentColor;
+  opacity: 0.6;
+}
+
+.cover-sub {
+  font-family: var(--font-body);
+  font-size: 0.6rem;
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+  opacity: 0.75;
+}
+
+.cover-spine {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 16px;
+  border-radius: 4px 0 0 4px;
+  background: linear-gradient(90deg, oklch(0.17 0.03 35), oklch(0.26 0.05 40));
+  box-shadow: inset -3px 0 6px oklch(0 0 0 / 0.5);
+}
+
+/* --- controls --- */
+.book-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  animation: rise 600ms ease both;
+}
+
+.tool-btn {
+  font-family: var(--font-body);
+  font-size: 0.7rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  padding: 0.5rem 0.95rem;
+  color: var(--gilt);
+  border: 1px solid oklch(0.79 0.108 82 / 0.35);
+  border-radius: 2px;
+  background: oklch(0.24 0.04 40 / 0.7);
+  transition: background 200ms ease, color 200ms ease, transform 200ms ease;
+}
+
+.tool-btn:hover:not(:disabled) {
+  background: oklch(0.32 0.055 40);
+  transform: translateY(-1px);
+}
+
+.tool-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+}
