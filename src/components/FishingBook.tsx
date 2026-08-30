@@ -1,79 +1,26 @@
-import { useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import ponty from "@/assets/fish-ponty.jpg";
 import csuka from "@/assets/fish-csuka.jpg";
 import harcsa from "@/assets/fish-harcsa.jpg";
 import suger from "@/assets/fish-suger.jpg";
 import fogas from "@/assets/fish-fogas.jpg";
+import ProcessingBench from "@/components/ProcessingBench";
+import { FISH, type Fish } from "@/data/fish";
 
-type Fish = {
-  name: string;
-  latin: string;
-  img: string;
-  weight: string;
-  season: string;
-  bait: string;
-  spot: string;
-  text: string;
-  rarity: string;
+const IMG: Record<string, string> = {
+  ponty,
+  csuka,
+  harcsa,
+  suger,
+  fogas,
 };
 
-const FISH: Fish[] = [
-  {
-    name: "Ponty",
-    latin: "Cyprinus carpio",
-    img: ponty,
-    weight: "2 – 18 kg",
-    season: "Május – Szeptember",
-    bait: "Kukorica, bojli",
-    spot: "Tavak, holtágak",
-    rarity: "Gyakori",
-    text: "A vizek csendes óriása. Óvatos, gyanakvó hal — a türelmetlen horgász sosem fogja ki. Etesd meg a helyet, majd várj mozdulatlanul.",
-  },
-  {
-    name: "Csuka",
-    latin: "Esox lucius",
-    img: csuka,
-    weight: "3 – 12 kg",
-    season: "Március – November",
-    bait: "Villantó, élő csali",
-    spot: "Nádasok szegélye",
-    rarity: "Ritka",
-    text: "A sekélyes ragadozója, mozdulatlanul les a hínár között. Támadása villámgyors; acélelőke nélkül elveszíted a zsinórt és a halat is.",
-  },
-  {
-    name: "Harcsa",
-    latin: "Silurus glanis",
-    img: harcsa,
-    weight: "10 – 70 kg",
-    season: "Június – Augusztus",
-    bait: "Kagyló, giliszta-csomó",
-    spot: "Mély gödrök, folyómeder",
-    rarity: "Nagyon ritka",
-    text: "Éjszaka jár zsákmány után a meder legmélyén. Kifárasztása órákig tarthat — erős bot és hideg vér szükségeltetik hozzá.",
-  },
-  {
-    name: "Sügér",
-    latin: "Perca fluviatilis",
-    img: suger,
-    weight: "0,2 – 1,5 kg",
-    season: "Egész évben",
-    bait: "Giliszta, kis wobbler",
-    spot: "Kikötők, kövezés",
-    rarity: "Nagyon gyakori",
-    text: "Csapatban vadászik, mohó és bátor. Ha egyet fogtál, ne mozdulj onnan: a raj még ott van a horog alatt.",
-  },
-  {
-    name: "Fogassüllő",
-    latin: "Sander lucioperca",
-    img: fogas,
-    weight: "1 – 9 kg",
-    season: "Szeptember – Április",
-    bait: "Gumihal, keszeg",
-    spot: "Kőszórás, hídlábak",
-    rarity: "Ritka",
-    text: "Szürkületi vadász, tiszta vizet és kemény meder-aljzatot kedvel. Kapása alig érezhető — figyelj a zsinór apró rezdülésére.",
-  },
-];
+const FLIP_MS = 900;
+const OPEN_MS = 1250;
+
+function huf(n: number) {
+  return `${n.toLocaleString("hu-HU")} $`;
+}
 
 function FishPage({ fish, no }: { fish: Fish; no: number }) {
   return (
@@ -88,7 +35,7 @@ function FishPage({ fish, no }: { fish: Fish; no: number }) {
 
       <div className="plate mt-3">
         <img
-          src={fish.img}
+          src={IMG[fish.id]}
           alt={`${fish.name} metszet`}
           loading="lazy"
           width={768}
@@ -122,6 +69,63 @@ function FishPage({ fish, no }: { fish: Fish; no: number }) {
   );
 }
 
+function MarketPage({ fish, no }: { fish: Fish; no: number }) {
+  const best = fish.cuts.reduce((a, b) => (b.total > a.total ? b : a), fish.cuts[0]);
+  return (
+    <div className="book-page-inner">
+      <div className="flex items-baseline justify-between border-b border-ink/25 pb-2">
+        <h3 className="font-display text-xl leading-none text-ink">
+          {fish.name} — értékesítés
+        </h3>
+        <span className="font-body text-[0.6rem] uppercase tracking-[0.25em] text-ink-faded">
+          Fol. {no}
+        </span>
+      </div>
+
+      <p className="mt-2 font-body text-[0.7rem] leading-relaxed text-ink">
+        Egészben a halászcéh {huf(fish.wholePrice)} árat fizet érte. Aki kést fog, többet keres —
+        alább a feldolgozási módok haszna.
+      </p>
+
+      <table className="mt-3 w-full border-collapse font-body text-[0.65rem] text-ink">
+        <thead>
+          <tr className="border-b border-ink/30 text-[0.52rem] uppercase tracking-[0.18em] text-ink-faded">
+            <th className="py-1 text-left font-normal">Mód</th>
+            <th className="py-1 text-left font-normal">Kimenet</th>
+            <th className="py-1 text-right font-normal">Érték</th>
+          </tr>
+        </thead>
+        <tbody>
+          {fish.cuts.map((c) => (
+            <tr key={c.id} className="border-b border-ink/12 align-top">
+              <td className="py-1 pr-2">
+                {c.label}
+                <span className="block text-[0.52rem] uppercase tracking-[0.16em] text-ink-faded">
+                  {c.tool} · {c.time}s
+                </span>
+              </td>
+              <td className="py-1 pr-2">
+                {c.yield}× {c.output}
+              </td>
+              <td className="py-1 text-right whitespace-nowrap">{huf(c.total)}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+
+      <p className="mt-3 font-body text-[0.68rem] leading-relaxed text-ink">
+        Legjobb haszon: <em>{best.label}</em> — {huf(best.total)} (
+        {Math.round((best.total / fish.wholePrice - 1) * 100)}% többlet). Rontott vágás esetén a
+        hús egy része odavész.
+      </p>
+
+      <p className="mt-auto pt-3 font-body text-[0.6rem] uppercase tracking-[0.25em] text-ink-faded">
+        Romlandóság — {fish.spoil}
+      </p>
+    </div>
+  );
+}
+
 function TitlePage() {
   return (
     <div className="book-page-inner items-center justify-center text-center">
@@ -137,7 +141,7 @@ function TitlePage() {
       <p className="mt-3 font-body text-[0.7rem] italic text-ink-faded">
         A hazai vizek halainak jegyzéke,
         <br />
-        csalik és fogási módok szerint rendezve.
+        csalik, fogási módok és feldolgozás szerint.
       </p>
       <div className="my-5 h-px w-24 bg-ink/30" />
       <p className="max-w-[16rem] font-body text-[0.68rem] leading-relaxed text-ink">
@@ -156,8 +160,8 @@ function EndPage() {
       <h3 className="font-display text-2xl text-ink">A jegyzék vége</h3>
       <div className="my-4 h-px w-20 bg-ink/30" />
       <p className="max-w-[16rem] font-body text-[0.72rem] leading-relaxed text-ink">
-        Öt faj, öt türelem-próba. A többi lap üresen maradt — hagyd, hogy a saját fogásaid
-        töltsék meg.
+        Öt faj, öt türelem-próba. A pénz nem a parton, hanem a vágódeszkán terem — nyisd meg a
+        feldolgozó pultot a könyv alatt.
       </p>
       <p className="mt-auto font-body text-[0.55rem] uppercase tracking-[0.3em] text-ink-faded">
         Csukd be a könyvet
@@ -168,85 +172,155 @@ function EndPage() {
 
 const PAGES = [
   <TitlePage key="t" />,
-  ...FISH.map((f, i) => <FishPage key={f.name} fish={f} no={i + 1} />),
+  ...FISH.flatMap((f, i) => [
+    <FishPage key={`${f.id}-a`} fish={f} no={i * 2 + 1} />,
+    <MarketPage key={`${f.id}-b`} fish={f} no={i * 2 + 2} />,
+  ]),
   <EndPage key="e" />,
 ];
 
-// sheets: each sheet holds two pages (front + back)
 const SHEETS = Array.from({ length: Math.ceil(PAGES.length / 2) }, (_, i) => ({
   front: PAGES[i * 2],
   back: PAGES[i * 2 + 1] ?? null,
 }));
 
 export default function FishingBook() {
-  const [open, setOpen] = useState(false);
+  const [phase, setPhase] = useState<"closed" | "opening" | "open">("closed");
   const [flipped, setFlipped] = useState(0);
+  // what the static pages under the sheets should show — only updated
+  // once the flip animation has actually finished
+  const [settled, setSettled] = useState(0);
+  const [busy, setBusy] = useState(false);
+  const timers = useRef<number[]>([]);
+
+  const later = useCallback((fn: () => void, ms: number) => {
+    timers.current.push(window.setTimeout(fn, ms));
+  }, []);
+
+  useEffect(() => () => timers.current.forEach(clearTimeout), []);
+
+  const open = () => {
+    if (phase !== "closed" || busy) return;
+    setBusy(true);
+    setPhase("opening"); // 1. the book widens to a spread
+    later(() => setPhase("open"), 420); // 2. only then the cover swings over
+    later(() => setBusy(false), OPEN_MS);
+  };
 
   const close = () => {
+    if (busy) return;
+    setBusy(true);
     setFlipped(0);
-    setOpen(false);
+    setSettled(0);
+    setPhase("opening");
+    later(() => setPhase("closed"), 480);
+    later(() => setBusy(false), OPEN_MS);
   };
+
+  const go = (dir: 1 | -1) => {
+    if (busy) return;
+    const next = Math.min(SHEETS.length, Math.max(0, flipped + dir));
+    if (next === flipped) return;
+    setBusy(true);
+    setFlipped(next);
+    later(() => {
+      setSettled(next);
+      setBusy(false);
+    }, FLIP_MS);
+  };
+
+  const isOpen = phase === "open";
 
   return (
     <div className="book-stage">
-      <div className={`book ${open ? "is-open" : ""}`}>
-        {/* back cover / body */}
+      <div className={`book ${phase !== "closed" ? "is-spread" : ""} ${isOpen ? "is-open" : ""}`}>
         <div className="book-body">
           <div className="book-left-page">
-            {flipped > 0 ? (
-              <div className="book-page-inner opacity-95">{SHEETS[flipped - 1]?.back}</div>
+            {settled > 0 ? (
+              <div className="book-page-inner opacity-95">{SHEETS[settled - 1]?.back}</div>
             ) : (
-              <div className="book-page-inner items-center justify-center">
+              <div className="book-page-inner items-center justify-center text-center">
                 <p className="font-body text-[0.6rem] uppercase tracking-[0.3em] text-ink-faded">
                   Ex libris
+                </p>
+                <p className="mt-2 font-display text-lg text-ink/70">Halászcéh</p>
+              </div>
+            )}
+          </div>
+          <div className="book-right-page">
+            {settled >= SHEETS.length && (
+              <div className="book-page-inner items-center justify-center">
+                <p className="font-body text-[0.6rem] uppercase tracking-[0.3em] text-ink-faded">
+                  Finis
                 </p>
               </div>
             )}
           </div>
-          <div className="book-right-page" />
           <div className="book-gutter" />
 
-          {SHEETS.map((sheet, i) => (
-            <div
-              key={i}
-              className={`sheet ${i < flipped ? "is-flipped" : ""}`}
-              style={{ zIndex: i < flipped ? i : SHEETS.length - i }}
-            >
-              <div className="sheet-face sheet-front">{sheet.front}</div>
-              <div className="sheet-face sheet-back">{sheet.back}</div>
-            </div>
-          ))}
+          {SHEETS.map((sheet, i) => {
+            const isFlipped = i < flipped;
+            return (
+              <div
+                key={i}
+                className={`sheet ${isFlipped ? "is-flipped" : ""}`}
+                style={{ zIndex: isFlipped ? 20 + i : 20 + (SHEETS.length - i) }}
+              >
+                <div className="sheet-face sheet-front">{sheet.front}</div>
+                <div className="sheet-face sheet-back">{sheet.back}</div>
+                <span className="sheet-shade" />
+              </div>
+            );
+          })}
         </div>
 
-        {/* front cover */}
         <button
           type="button"
-          onClick={() => setOpen(true)}
+          onClick={open}
           aria-label="Könyv kinyitása"
           className="book-cover"
+          disabled={phase !== "closed"}
         >
+          <span className="cover-leather" />
           <span className="cover-frame">
-            <span className="cover-emblem">⚓</span>
+            <span className="cover-corner tl" />
+            <span className="cover-corner tr" />
+            <span className="cover-corner bl" />
+            <span className="cover-corner br" />
+            <span className="cover-crest">
+              <svg viewBox="0 0 64 64" aria-hidden="true">
+                <path
+                  d="M6 32c9-11 20-16 30-16s18 5 22 16c-4 11-12 16-22 16S15 43 6 32Z"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.6"
+                />
+                <path d="M46 22 58 12v40L46 42" fill="none" stroke="currentColor" strokeWidth="1.6" />
+                <circle cx="20" cy="29" r="1.8" fill="currentColor" />
+                <path d="M22 38c6 3 12 3 18 0" fill="none" stroke="currentColor" strokeWidth="1.2" />
+              </svg>
+            </span>
+            <span className="cover-kicker">Halászcéh · Anno 1924</span>
             <span className="cover-title">
               Horgászási
               <br />
               Technikák
             </span>
             <span className="cover-rule" />
-            <span className="cover-sub">Halismereti jegyzék</span>
+            <span className="cover-sub">Halismeret &amp; feldolgozás</span>
+            <span className="cover-hint">Kattints a kinyitáshoz</span>
           </span>
-          <span className="cover-spine" />
+          <span className="cover-spine">
+            <span className="spine-band" />
+            <span className="spine-band" />
+            <span className="spine-band" />
+          </span>
         </button>
       </div>
 
-      {open && (
+      {isOpen && (
         <div className="book-controls">
-          <button
-            type="button"
-            className="tool-btn"
-            disabled={flipped === 0}
-            onClick={() => setFlipped((f) => Math.max(0, f - 1))}
-          >
+          <button type="button" className="tool-btn" disabled={busy || flipped === 0} onClick={() => go(-1)}>
             ← Vissza
           </button>
           <span className="font-body text-[0.6rem] uppercase tracking-[0.3em] text-parchment/70">
@@ -255,16 +329,18 @@ export default function FishingBook() {
           <button
             type="button"
             className="tool-btn"
-            disabled={flipped === SHEETS.length}
-            onClick={() => setFlipped((f) => Math.min(SHEETS.length, f + 1))}
+            disabled={busy || flipped === SHEETS.length}
+            onClick={() => go(1)}
           >
             Lapozás →
           </button>
-          <button type="button" className="tool-btn" onClick={close}>
+          <button type="button" className="tool-btn" onClick={close} disabled={busy}>
             Becsukás
           </button>
         </div>
       )}
+
+      <ProcessingBench />
     </div>
   );
 }
