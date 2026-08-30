@@ -363,6 +363,7 @@
 }
 
 .book.is-open .book-cover {
+  z-index: 1;
   transform: rotateY(-180deg) translateX(-1px);
   left: 1%;
   width: 50%;
